@@ -1,0 +1,73 @@
+# Development files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.coverage.*
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Output files (simulation results)
+*.log
+*.traj
+*.yaml
+*.json
+*.cif
+*.xyz
+*.png
+*.pdf
+phonon_output/
+optimization.log
+screening_results.json
+optimized_*.cif
+nvt_md.*
+npt_md.*
+thermal_properties.png
+
+# mypy
+.mypy_cache/
+
+# Setuptools egg-info (auto-generated)
+src/*.egg-info/
