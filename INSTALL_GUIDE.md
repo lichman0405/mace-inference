@@ -433,8 +433,9 @@ mypy src/
 ## 📖 API Documentation
 
 For detailed API documentation, refer to:
-- [MACE_inference_API_reference.md](../MACE_inference/MACE_inference_API_reference.md)
-- [MACE_inference_tasks.md](../MACE_inference/MACE_inference_tasks.md)
+- [API Reference](API_REFERENCE.md) - Complete API documentation
+- [Quick Start](QUICKSTART.md) - Getting started guide
+- [Examples](examples/README.md) - Usage examples
 
 ## ⚠️ Troubleshooting
 
