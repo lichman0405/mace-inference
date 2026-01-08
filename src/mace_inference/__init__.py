@@ -10,7 +10,8 @@ except PackageNotFoundError:
     # Package is not installed (development mode without editable install)
     __version__ = "0.1.0.dev0"
 
-__author__ = "MACE Inference Contributors"
+__author__ = "Shibo Li"
+__email__ = "shadow.li981@gmail.com"
 
 from mace_inference.core import MACEInference
 from mace_inference.utils.device import get_device
