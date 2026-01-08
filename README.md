@@ -8,7 +8,7 @@
 
 **High-level Python library for MACE machine learning force field inference tasks**
 
-[Installation](#installation) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Examples](#examples)
+[Installation](#-installation) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Examples](#-examples)
 
 </div>
 
