@@ -50,30 +50,29 @@ print(f"Max force: {result['max_force']:.6f} eV/Å")
 ### Structure Optimization
 
 ```python
-opt_result = calc.optimize(
+# optimize() returns the optimized Atoms object directly
+optimized = calc.optimize(
     atoms,
-    fmax=0.01,           # Force convergence
-    steps=500,           # Max iterations
-    optimizer="BFGS"     # Algorithm
+    fmax=0.01,            # Force convergence
+    steps=500,            # Max iterations
+    optimizer="LBFGS"     # Algorithm
 )
 
-print(f"Converged: {opt_result['converged']}")
-print(f"Final energy: {opt_result['energy']:.6f} eV")
-print(f"Steps taken: {opt_result['steps']}")
+print(f"Final energy: {optimized.get_potential_energy():.6f} eV")
 ```
 
 ### Full Cell Relaxation
 
 ```python
-opt_cell = calc.optimize(
+optimized = calc.optimize(
     atoms,
     fmax=0.01,
-    relax_cell=True      # Also optimize cell vectors
+    optimize_cell=True    # Also optimize cell vectors
 )
 
 # Compare volumes
 initial_vol = atoms.get_volume()
-final_vol = opt_cell['atoms'].get_volume()
+final_vol = optimized.get_volume()
 print(f"Volume change: {(final_vol/initial_vol - 1)*100:.2f}%")
 ```
 

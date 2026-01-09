@@ -30,59 +30,56 @@ atoms = read("structures/cu_fcc.cif")
 Always relax the structure before running MD:
 
 ```python
-opt = calc.optimize(atoms, fmax=0.01)
-atoms = opt['atoms']
+# optimize() returns Atoms object directly
+atoms = calc.optimize(atoms, fmax=0.01)
 ```
 
 ### NVT Simulation
 
 ```python
-nvt_result = calc.run_md(
+# run_md() returns the final Atoms object
+final = calc.run_md(
     atoms,
     ensemble="nvt",
-    temperature=300,      # K
+    temperature_K=300,    # Kelvin
     timestep=1.0,         # fs
     steps=1000,
-    friction=0.01,        # Langevin friction
-    save_interval=10,
+    trajectory="nvt.traj", # Save trajectory to file
     log_interval=100
 )
 
-print(f"Trajectory frames: {len(nvt_result['trajectory'])}")
-print(f"Final T: {nvt_result['temperatures'][-1]:.1f} K")
+print(f"Final energy: {final.get_potential_energy():.4f} eV")
 ```
 
 ### NPT Simulation
 
 ```python
-npt_result = calc.run_md(
+final = calc.run_md(
     atoms,
     ensemble="npt",
-    temperature=300,
-    pressure=0.0001,      # GPa (~1 atm)
+    temperature_K=300,
+    pressure_GPa=0.0001,  # GPa (~1 atm)
     timestep=1.0,
     steps=1000
 )
 
 # Check volume equilibration
 V_initial = atoms.get_volume()
-V_final = npt_result['final_atoms'].get_volume()
+V_final = final.get_volume()
 print(f"Volume change: {(V_final/V_initial - 1)*100:.2f}%")
 ```
 
-### Save Trajectory
+### Save and Analyze Trajectory
 
 ```python
-write("trajectory.xyz", nvt_result['trajectory'])
-```
+from ase.io import Trajectory
 
-### Analyze Temperature
+# Read saved trajectory
+traj = Trajectory("nvt.traj")
+print(f"Trajectory frames: {len(traj)}")
 
-```python
-import numpy as np
-
-temps = np.array(nvt_result['temperatures'])
-print(f"Temperature: {temps.mean():.1f} ± {temps.std():.1f} K")
+# Analyze energies
+energies = [frame.get_potential_energy() for frame in traj]
 ```
 
 ## Expected Output

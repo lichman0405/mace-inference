@@ -30,8 +30,8 @@ atoms = read("structures/si_diamond.cif")
 Phonon calculations require well-relaxed structures:
 
 ```python
-opt = calc.optimize(atoms, fmax=0.001)
-atoms = opt['atoms']
+# optimize() returns Atoms directly
+atoms = calc.optimize(atoms, fmax=0.001, optimize_cell=True)
 ```
 
 ### Calculate Phonons
@@ -39,9 +39,9 @@ atoms = opt['atoms']
 ```python
 result = calc.phonon(
     atoms,
-    supercell=(2, 2, 2),  # Supercell for force constants
-    delta=0.01,           # Displacement in Å
-    temperature=300       # For thermal properties
+    supercell_matrix=[2, 2, 2],  # Supercell for force constants
+    displacement=0.01,            # Displacement in Å
+    temperature_range=(0, 500, 10) # For thermal properties
 )
 ```
 
@@ -61,12 +61,10 @@ else:
 ### Thermal Properties
 
 ```python
-thermal = result['thermal_properties']
-
-print(f"At 300 K:")
-print(f"  Free energy: {thermal['free_energy']:.4f} eV")
-print(f"  Entropy: {thermal['entropy']*1000:.4f} meV/K")
-print(f"  Heat capacity: {thermal['heat_capacity']*1000:.4f} meV/K")
+# Thermal properties available if temperature_range was specified
+if 'thermal' in result:
+    thermal = result['thermal']
+    print(f"Thermal properties calculated for {len(thermal['temperatures'])} temperatures")
 ```
 
 ### Plot DOS

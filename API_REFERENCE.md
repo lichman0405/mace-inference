@@ -341,10 +341,11 @@ Calculate bulk modulus via equation of state fitting.
 def bulk_modulus(
     self,
     structure: Union[str, Path, Atoms],
-    strain_range: float = 0.05,
-    n_points: int = 7,
+    scale_range: Tuple[float, float] = (0.95, 1.05),
+    n_points: int = 11,
     optimize_first: bool = True,
-    fmax: float = 0.01
+    fmax: float = 0.01,
+    eos_type: str = "birchmurnaghan"
 ) -> Dict[str, Any]
 ```
 
@@ -353,10 +354,11 @@ def bulk_modulus(
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `structure` | `str`, `Path`, `Atoms` | Required | Input structure |
-| `strain_range` | `float` | `0.05` | Maximum strain for volume sweep (±5%) |
-| `n_points` | `int` | `7` | Number of strain points |
+| `scale_range` | `Tuple[float, float]` | `(0.95, 1.05)` | Volume scale range (min, max) |
+| `n_points` | `int` | `11` | Number of volume points |
 | `optimize_first` | `bool` | `True` | Optimize structure before calculation |
 | `fmax` | `float` | `0.01` | Force criterion for optimization |
+| `eos_type` | `str` | `"birchmurnaghan"` | Equation of state type |
 
 **Returns:** `Dict[str, Any]`
 
@@ -414,10 +416,12 @@ def adsorption_energy(
 
 | Key | Type | Unit | Description |
 |-----|------|------|-------------|
-| `adsorption_energy` | `float` | eV | Adsorption energy (negative = favorable) |
-| `E_framework` | `float` | eV | Framework energy |
-| `E_adsorbate` | `float` | eV | Isolated adsorbate energy |
+| `E_ads` | `float` | eV | Adsorption energy (negative = favorable) |
+| `E_mof` | `float` | eV | Framework energy |
+| `E_gas` | `float` | eV | Isolated adsorbate energy |
 | `E_complex` | `float` | eV | Combined system energy |
+| `complex_structure` | `Atoms` | - | Final complex structure |
+| `optimized` | `bool` | - | Whether structure was optimized |
 
 **Example:**
 
@@ -427,7 +431,7 @@ result = calc.adsorption_energy(
     adsorbate="CO2",
     site_position=[10.0, 10.0, 10.0]
 )
-print(f"Adsorption energy: {result['adsorption_energy']:.3f} eV")
+print(f"Adsorption energy: {result['E_ads']:.3f} eV")
 # Negative value indicates favorable adsorption
 ```
 

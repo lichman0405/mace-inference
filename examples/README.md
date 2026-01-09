@@ -159,15 +159,16 @@ Study gas adsorption in porous materials:
 result = calc.adsorption_energy(
     framework=framework,
     adsorbate=co2,
-    adsorption_site=[5.0, 5.0, 5.0],
+    site_position=[5.0, 5.0, 5.0],
     optimize=True,
     fix_framework=True
 )
-print(f"Adsorption energy: {result['adsorption_energy']:.4f} eV")
+print(f"Adsorption energy: {result['E_ads']:.4f} eV")
 
 # Coordination analysis
-coord = calc.coordination_analysis(framework, cutoff=3.0)
-print(f"Average CN: {coord['average_coordination']:.2f}")
+coord = calc.coordination(framework)
+for idx, info in coord['coordination'].items():
+    print(f"Metal {idx}: CN = {info['coordination_number']}")
 ```
 
 **Run:**
@@ -217,14 +218,14 @@ Use DFT-D3 dispersion correction:
 
 ```python
 # Without D3
-calc_no_d3 = MACEInference(model="medium", use_d3=False)
+calc_no_d3 = MACEInference(model="medium", enable_d3=False)
 
 # With D3
 calc_with_d3 = MACEInference(
     model="medium",
-    use_d3=True,
+    enable_d3=True,
     d3_xc="pbe",
-    d3_cutoff=40.0
+    d3_damping="bj"
 )
 
 # Compare energies
