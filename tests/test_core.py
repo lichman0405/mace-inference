@@ -34,6 +34,10 @@ class TestMACEInferenceInit:
     def test_init_with_d3(self):
         """Test initialization with D3 correction enabled"""
         from mace_inference import MACEInference
+        from mace_inference.utils import check_d3_available
+        
+        if not check_d3_available():
+            pytest.skip("torch-dftd not installed")
         
         calc = MACEInference(model="small", device="cpu", enable_d3=True)
         assert calc.enable_d3 is True
