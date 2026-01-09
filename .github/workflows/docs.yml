@@ -36,6 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install mkdocs mkdocs-material mkdocstrings[python]
+          pip install -e . --no-deps
 
       - name: Build docs
         run: mkdocs build
