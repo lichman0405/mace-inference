@@ -71,6 +71,16 @@ class SinglePointResult(TypedDict, total=False):
     
     pressure_GPa: Optional[float]
     """Hydrostatic pressure in GPa."""
+    
+    # Fields used in batch operations
+    success: bool
+    """Whether the calculation succeeded."""
+    
+    error: str
+    """Error message if calculation failed."""
+    
+    structure_index: int
+    """Index of the structure in batch operations."""
 
 
 class BulkModulusResult(TypedDict):
@@ -128,6 +138,9 @@ class PhononResult(TypedDict, total=False):
     
     thermal_properties: ThermalPropertiesResult
     """Thermal properties if temperature_range was specified."""
+    
+    thermal: ThermalPropertiesResult
+    """Alias for thermal_properties."""
 
 
 class AdsorptionResult(TypedDict):

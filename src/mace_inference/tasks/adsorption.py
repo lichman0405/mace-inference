@@ -1,6 +1,6 @@
 """Adsorption energy and coordination analysis"""
 
-from typing import Union, List, Optional, Dict, Any, TYPE_CHECKING
+from typing import Union, List, Optional, TYPE_CHECKING
 import numpy as np
 from ase import Atoms
 from ase.build import molecule

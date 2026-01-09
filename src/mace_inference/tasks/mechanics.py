@@ -100,7 +100,7 @@ def calculate_elastic_constants(
     atoms.calc = calculator
     
     # Get reference stress (should be ~0 for relaxed structure)
-    ref_stress = atoms.get_stress(voigt=False)  # 3x3 tensor
+    _ref_stress = atoms.get_stress(voigt=False)  # 3x3 tensor, used to verify relaxed state
     
     # Voigt notation indices: 
     # 0=xx, 1=yy, 2=zz, 3=yz, 4=xz, 5=xy

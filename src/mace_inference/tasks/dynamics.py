@@ -7,7 +7,6 @@ from ase.md.npt import NPT
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from ase.io import Trajectory
 from ase import units
-import warnings
 
 
 def run_nvt_md(

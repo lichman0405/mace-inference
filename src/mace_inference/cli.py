@@ -1,9 +1,7 @@
 """Command-line interface for MACE inference"""
 
 import click
-import sys
 import numpy as np
-from pathlib import Path
 
 from mace_inference import __version__
 
@@ -56,7 +54,7 @@ def optimize(structure, model, device, d3, fmax, steps, optimizer, cell, output,
     click.echo(f"Optimizing structure: {structure}")
     calc = MACEInference(model=model, device=device, enable_d3=d3)
     
-    optimized = calc.optimize(
+    calc.optimize(
         structure,
         fmax=fmax,
         steps=steps,
@@ -66,7 +64,7 @@ def optimize(structure, model, device, d3, fmax, steps, optimizer, cell, output,
         output=output
     )
     
-    click.echo(f"\n✓ Optimization completed")
+    click.echo("\n✓ Optimization completed")
     if output:
         click.echo(f"✓ Saved to: {output}")
 
@@ -95,7 +93,7 @@ def md(structure, model, device, d3, ensemble, temp, pressure, steps, timestep, 
     
     calc = MACEInference(model=model, device=device, enable_d3=d3)
     
-    final_atoms = calc.run_md(
+    calc.run_md(
         structure,
         ensemble=ensemble,
         temperature_K=temp,
@@ -106,7 +104,7 @@ def md(structure, model, device, d3, ensemble, temp, pressure, steps, timestep, 
         logfile=logfile
     )
     
-    click.echo(f"\n✓ MD simulation completed")
+    click.echo("\n✓ MD simulation completed")
     if trajectory:
         click.echo(f"✓ Trajectory saved: {trajectory}")
 
@@ -138,7 +136,7 @@ def phonon(structure, model, device, supercell, temp_range, mesh, output_dir):
         output_dir=output_dir
     )
     
-    click.echo(f"\n✓ Phonon calculation completed")
+    click.echo("\n✓ Phonon calculation completed")
     
     if 'thermal_properties' in result:
         thermal = result['thermal_properties']
@@ -146,7 +144,7 @@ def phonon(structure, model, device, supercell, temp_range, mesh, output_dir):
         click.echo(f"Temperature range: {thermal['temperatures'][0]:.1f} - {thermal['temperatures'][-1]:.1f} K")
         # Print properties at 300 K if available
         idx_300 = np.argmin(np.abs(thermal['temperatures'] - 300))
-        click.echo(f"\nAt 300 K:")
+        click.echo("\nAt 300 K:")
         click.echo(f"  Free Energy: {thermal['free_energy'][idx_300]:.3f} kJ/mol")
         click.echo(f"  Entropy:     {thermal['entropy'][idx_300]:.3f} J/(mol·K)")
         click.echo(f"  Heat Capacity: {thermal['heat_capacity'][idx_300]:.3f} J/(mol·K)")

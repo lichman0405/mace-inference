@@ -1,7 +1,7 @@
 """Device management utilities for MACE inference"""
 
 import torch
-from typing import Literal, Union
+from typing import Literal
 
 DeviceType = Literal["auto", "cpu", "cuda"]
 

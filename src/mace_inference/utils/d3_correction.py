@@ -83,7 +83,7 @@ def create_combined_calculator(
 def check_d3_available() -> bool:
     """Check if torch-dftd is installed."""
     try:
-        import torch_dftd
+        import torch_dftd  # noqa: F401
         return True
     except ImportError:
         return False

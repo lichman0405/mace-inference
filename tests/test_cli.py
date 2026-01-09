@@ -74,7 +74,7 @@ class TestEnergyCommand:
             'pressure_GPa': 0.1
         }
         
-        with patch('mace_inference.cli.MACEInference') as MockCalc:
+        with patch('mace_inference.MACEInference') as MockCalc:
             mock_instance = MagicMock()
             mock_instance.single_point.return_value = mock_result
             MockCalc.return_value = mock_instance
@@ -110,7 +110,7 @@ class TestOptimizeCommand:
         output_file = tmp_path / "optimized.xyz"
         mock_atoms = bulk('Cu', 'fcc', a=3.6)
         
-        with patch('mace_inference.cli.MACEInference') as MockCalc:
+        with patch('mace_inference.MACEInference') as MockCalc:
             mock_instance = MagicMock()
             mock_instance.optimize.return_value = mock_atoms
             MockCalc.return_value = mock_instance
@@ -151,7 +151,7 @@ class TestMDCommand:
         
         mock_atoms = bulk('Cu', 'fcc', a=3.6)
         
-        with patch('mace_inference.cli.MACEInference') as MockCalc:
+        with patch('mace_inference.MACEInference') as MockCalc:
             mock_instance = MagicMock()
             mock_instance.run_md.return_value = mock_atoms
             MockCalc.return_value = mock_instance
@@ -210,7 +210,7 @@ class TestBulkModulusCommand:
             'energies': [-9.5, -10.0, -9.5]
         }
         
-        with patch('mace_inference.cli.MACEInference') as MockCalc:
+        with patch('mace_inference.MACEInference') as MockCalc:
             mock_instance = MagicMock()
             mock_instance.bulk_modulus.return_value = mock_result
             MockCalc.return_value = mock_instance
@@ -248,7 +248,7 @@ class TestAdsorptionCommand:
             'E_complex': -105.5
         }
         
-        with patch('mace_inference.cli.MACEInference') as MockCalc:
+        with patch('mace_inference.MACEInference') as MockCalc:
             mock_instance = MagicMock()
             mock_instance.adsorption_energy.return_value = mock_result
             MockCalc.return_value = mock_instance

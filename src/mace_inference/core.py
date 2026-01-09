@@ -7,7 +7,7 @@ from ase import Atoms
 
 from mace_inference.utils.device import get_device, validate_device
 from mace_inference.utils.d3_correction import create_combined_calculator
-from mace_inference.utils.io import parse_structure_input, save_structure, create_supercell
+from mace_inference.utils.io import parse_structure_input, save_structure
 from mace_inference.tasks import (
     single_point_energy,
     optimize_structure,
@@ -79,7 +79,7 @@ class MACEInference:
     def _create_calculator(self):
         """Create MACE calculator with optional D3 correction."""
         try:
-            from mace.calculators import mace_mp, mace_off, MACECalculator
+            from mace.calculators import mace_mp, MACECalculator
         except ImportError:
             raise ImportError(
                 "mace-torch is required. Install with: pip install mace-torch"
