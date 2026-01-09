@@ -24,25 +24,26 @@ from numpy.typing import NDArray
 import sys
 
 if sys.version_info >= (3, 11):
-    from typing import TypedDict, NotRequired
+    from typing import TypedDict, NotRequired, TypeAlias
 else:
     from typing import TypedDict
     try:
-        from typing_extensions import NotRequired
+        from typing_extensions import NotRequired, TypeAlias
     except ImportError:
         # Fallback: NotRequired not available, use total=False pattern
         NotRequired = None  # type: ignore
+        TypeAlias = None  # type: ignore
 
 
 # =============================================================================
 # Array Types
 # =============================================================================
 
-ArrayLike = Union[List[float], np.ndarray, Sequence[float]]
-ForceArray = NDArray[np.floating[Any]]  # Shape: (n_atoms, 3)
-StressArray = NDArray[np.floating[Any]]  # Shape: (6,) Voigt notation
-PositionArray = NDArray[np.floating[Any]]  # Shape: (n_atoms, 3)
-CellArray = NDArray[np.floating[Any]]  # Shape: (3, 3)
+ArrayLike: TypeAlias = Union[List[float], np.ndarray, Sequence[float]]
+ForceArray: TypeAlias = NDArray[np.floating[Any]]  # Shape: (n_atoms, 3)
+StressArray: TypeAlias = NDArray[np.floating[Any]]  # Shape: (6,) Voigt notation
+PositionArray: TypeAlias = NDArray[np.floating[Any]]  # Shape: (n_atoms, 3)
+CellArray: TypeAlias = NDArray[np.floating[Any]]  # Shape: (3, 3)
 
 
 # =============================================================================
