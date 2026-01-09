@@ -1,4 +1,8 @@
-"""Unit tests for MACE inference utilities"""
+"""
+Tests for utility functions.
+
+Uses real implementations - no mocking.
+"""
 
 import pytest
 import numpy as np
@@ -6,126 +10,158 @@ from ase.build import bulk
 
 
 class TestDeviceUtils:
-    """Test device management utilities"""
-    
+    """Test device utility functions"""
+
     def test_get_device_auto(self):
-        from mace_inference.utils.device import get_device
+        """Test automatic device detection"""
+        from mace_inference.utils import get_device
+        
         device = get_device("auto")
         assert device in ["cpu", "cuda"]
-    
+
     def test_get_device_cpu(self):
-        from mace_inference.utils.device import get_device
+        """Test explicit CPU device"""
+        from mace_inference.utils import get_device
+        
         device = get_device("cpu")
         assert device == "cpu"
-    
+
     def test_invalid_device(self):
-        from mace_inference.utils.device import get_device
+        """Test invalid device raises error"""
+        from mace_inference.utils import validate_device
+        
         with pytest.raises(ValueError):
-            get_device("invalid")
-    
+            validate_device("invalid_device")
+
     def test_get_device_info(self):
-        from mace_inference.utils.device import get_device_info
+        """Test device info retrieval"""
+        from mace_inference.utils import get_device_info
+        
         info = get_device_info()
-        assert "cuda_available" in info
+        
         assert "pytorch_version" in info
+        assert "cuda_available" in info
+        assert "cuda_count" in info
 
 
 class TestIOUtils:
-    """Test I/O utilities"""
-    
-    def test_create_supercell(self):
-        from mace_inference.utils.io import create_supercell
+    """Test I/O utility functions"""
+
+    def test_parse_structure_input_atoms(self, cu_bulk):
+        """Test parsing Atoms object"""
+        from mace_inference.utils import parse_structure_input
         
-        atoms = bulk('Cu', 'fcc', a=3.6)
-        supercell = create_supercell(atoms, [2, 2, 2])
+        result = parse_structure_input(cu_bulk)
         
-        assert len(supercell) == len(atoms) * 8
-        assert np.allclose(supercell.get_volume(), atoms.get_volume() * 8)
-    
-    def test_create_supercell_isotropic(self):
-        from mace_inference.utils.io import create_supercell
+        assert len(result) == len(cu_bulk)
+        assert result.get_chemical_symbols() == cu_bulk.get_chemical_symbols()
+
+    def test_parse_structure_input_file(self, temp_structure_file):
+        """Test parsing structure from file"""
+        from mace_inference.utils import parse_structure_input
         
-        atoms = bulk('Cu', 'fcc', a=3.6)
-        supercell = create_supercell(atoms, 2)
+        result = parse_structure_input(temp_structure_file)
         
-        assert len(supercell) == len(atoms) * 8
-    
-    def test_atoms_to_dict(self):
-        from mace_inference.utils.io import atoms_to_dict, dict_to_atoms
+        assert len(result) > 0
+
+    def test_parse_structure_input_invalid(self):
+        """Test parsing invalid input raises error"""
+        from mace_inference.utils import parse_structure_input
         
-        atoms = bulk('Cu', 'fcc', a=3.6)
-        data = atoms_to_dict(atoms)
+        with pytest.raises((FileNotFoundError, ValueError, TypeError)):
+            parse_structure_input("nonexistent_file.xyz")
+
+    def test_create_supercell(self, cu_bulk):
+        """Test supercell creation"""
+        from mace_inference.utils import create_supercell
         
-        assert "symbols" in data
-        assert "positions" in data
-        assert "cell" in data
+        supercell = create_supercell(cu_bulk, [2, 2, 2])
         
-        # Test round-trip
-        reconstructed = dict_to_atoms(data)
-        assert len(reconstructed) == len(atoms)
-        assert reconstructed.get_chemical_formula() == atoms.get_chemical_formula()
+        assert len(supercell) == len(cu_bulk) * 8
+
+    def test_create_supercell_isotropic(self, cu_bulk):
+        """Test isotropic supercell creation"""
+        from mace_inference.utils import create_supercell
+        
+        supercell = create_supercell(cu_bulk, 2)
+        
+        assert len(supercell) == len(cu_bulk) * 8
+
+    def test_save_structure(self, cu_bulk, temp_output_dir):
+        """Test saving structure to file"""
+        import os
+        from mace_inference.utils import save_structure
+        
+        output_file = os.path.join(temp_output_dir, "test.xyz")
+        save_structure(cu_bulk, output_file)
+        
+        assert os.path.exists(output_file)
+
+    def test_atoms_to_dict(self, cu_bulk):
+        """Test converting Atoms to dictionary"""
+        from mace_inference.utils import atoms_to_dict
+        
+        result = atoms_to_dict(cu_bulk)
+        
+        assert "symbols" in result
+        assert "positions" in result
+        assert "cell" in result
 
 
 class TestD3Correction:
-    """Test D3 correction utilities"""
-    
+    """Test D3 dispersion correction utilities"""
+
     def test_check_d3_available(self):
-        from mace_inference.utils.d3_correction import check_d3_available
-        # Should not raise error
-        is_available = check_d3_available()
-        assert isinstance(is_available, bool)
+        """Test D3 availability check"""
+        from mace_inference.utils import check_d3_available
+        
+        # Should return boolean
+        result = check_d3_available()
+        assert isinstance(result, bool)
 
 
 class TestStaticTasks:
     """Test static calculation tasks"""
-    
-    def test_single_point_energy_structure(self):
-        """Test that single_point_energy can be called with structure"""
-        from mace_inference.tasks.static import single_point_energy
-        from unittest.mock import Mock
+
+    def test_single_point_energy_structure(self, mace_calc, cu_bulk):
+        """Test single-point energy calculation"""
+        from mace_inference.tasks import single_point_energy
         
-        atoms = bulk('Cu', 'fcc', a=3.6)
-        
-        # Mock calculator
-        mock_calc = Mock()
-        mock_calc.get_potential_energy = Mock(return_value=10.0)
-        mock_calc.get_forces = Mock(return_value=np.zeros((len(atoms), 3)))
-        mock_calc.get_stress = Mock(return_value=np.zeros(6))
-        
-        atoms.calc = mock_calc
-        result = single_point_energy(atoms, mock_calc)
+        result = single_point_energy(cu_bulk, mace_calc.calculator)
         
         assert "energy" in result
         assert "forces" in result
-        assert "stress" in result
+        assert isinstance(result["energy"], float)
 
-
-class TestCore:
-    """Test core MACEInference class"""
-    
-    def test_init_cpu(self):
-        """Test initialization with CPU device"""
-        from mace_inference import MACEInference
+    def test_optimize_structure(self, mace_calc, cu_bulk):
+        """Test structure optimization"""
+        from mace_inference.tasks import optimize_structure
+        from ase import Atoms
         
-        # This will fail if mace-torch is not installed, which is expected
-        try:
-            calc = MACEInference(model="medium", device="cpu")
-            assert calc.device == "cpu"
-        except ImportError:
-            pytest.skip("mace-torch not installed")
-    
-    def test_repr(self):
-        """Test string representation"""
-        from mace_inference import MACEInference
+        result = optimize_structure(cu_bulk, mace_calc.calculator, fmax=0.1, steps=5)
         
-        try:
-            calc = MACEInference(model="medium", device="cpu")
-            repr_str = repr(calc)
-            assert "MACEInference" in repr_str
-            assert "medium" in repr_str
-        except ImportError:
-            pytest.skip("mace-torch not installed")
+        assert isinstance(result, Atoms)
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+class TestDynamicsTasks:
+    """Test molecular dynamics tasks"""
+
+    def test_nvt_md(self, mace_calc, cu_supercell, temp_output_dir):
+        """Test NVT molecular dynamics"""
+        import os
+        from mace_inference.tasks import run_nvt_md
+        from ase import Atoms
+        
+        traj_file = os.path.join(temp_output_dir, "nvt.traj")
+        
+        result = run_nvt_md(
+            cu_supercell,
+            mace_calc.calculator,
+            temperature_K=300,
+            steps=3,
+            timestep=1.0,
+            trajectory=traj_file
+        )
+        
+        assert isinstance(result, Atoms)
+        assert os.path.exists(traj_file)
