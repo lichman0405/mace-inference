@@ -1,103 +1,134 @@
+#!/usr/bin/env python
 """
 Example 5: High-Throughput Screening
 
-This example demonstrates batch processing of multiple structures.
+This example demonstrates:
+- Processing multiple structures in batch
+- Comparing properties across materials
+- Simple screening workflow
 """
 
-from ase.build import bulk
+from pathlib import Path
+from ase.io import read
 from mace_inference import MACEInference
-import time
-
-# Initialize calculator once
-print("Initializing MACE calculator...")
-calc = MACEInference(model="medium", device="auto")
-
-# Create a set of structures to screen
-structures_to_screen = {
-    "Cu_fcc": bulk('Cu', 'fcc', a=3.6),
-    "Al_fcc": bulk('Al', 'fcc', a=4.05),
-    "Fe_bcc": bulk('Fe', 'bcc', a=2.87),
-    "Si_diamond": bulk('Si', 'diamond', a=5.43),
-    "NaCl": bulk('NaCl', 'rocksalt', a=5.64),
-}
-
-print(f"\nScreening {len(structures_to_screen)} structures...")
-
-results = {}
-
-# Batch single-point calculations
-print("\n=== Single-Point Energy Calculations ===")
-start_time = time.time()
-
-for name, atoms in structures_to_screen.items():
-    result = calc.single_point(atoms)
-    results[name] = {
-        'energy_per_atom': result['energy_per_atom'],
-        'max_force': result['max_force'],
-        'pressure_GPa': result['pressure_GPa']
-    }
-    print(f"{name:<15} E/atom: {result['energy_per_atom']:>10.6f} eV  "
-          f"P: {result['pressure_GPa']:>8.4f} GPa")
-
-elapsed = time.time() - start_time
-print(f"\nTotal time: {elapsed:.2f} s ({elapsed/len(structures_to_screen):.2f} s per structure)")
-
-# Batch structure optimization
-print("\n=== Structure Optimization ===")
-optimized_structures = {}
-
-for name, atoms in structures_to_screen.items():
-    print(f"\nOptimizing {name}...")
-    optimized = calc.optimize(
-        atoms,
-        fmax=0.01,
-        steps=200,
-        optimize_cell=True
-    )
-    
-    # Calculate properties of optimized structure
-    result_opt = calc.single_point(optimized)
-    
-    optimized_structures[name] = optimized
-    results[name]['optimized_energy'] = result_opt['energy_per_atom']
-    results[name]['optimized_volume'] = optimized.get_volume()
-    
-    print(f"  Energy/atom: {result_opt['energy_per_atom']:.6f} eV")
-    print(f"  Volume: {optimized.get_volume():.2f} Å³")
-
-# Calculate bulk modulus for selected structures
-print("\n=== Bulk Modulus Calculations ===")
-for name in ["Cu_fcc", "Al_fcc", "Si_diamond"]:
-    print(f"\nCalculating bulk modulus for {name}...")
-    atoms = optimized_structures[name]
-    
-    bm_result = calc.bulk_modulus(atoms, n_points=7)
-    results[name]['bulk_modulus_GPa'] = bm_result['B_GPa']
-    
-    print(f"  B = {bm_result['B_GPa']:.2f} GPa")
-
-# Export results
-print("\n=== Exporting Results ===")
 import json
 
-with open('screening_results.json', 'w') as f:
-    # Convert numpy types to native Python types for JSON
-    export_data = {}
-    for name, data in results.items():
-        export_data[name] = {
-            k: float(v) if hasattr(v, 'item') else v 
-            for k, v in data.items()
+EXAMPLES_DIR = Path(__file__).parent
+STRUCTURES_DIR = EXAMPLES_DIR / "structures"
+
+
+def main():
+    print("=" * 60)
+    print("Example 5: High-Throughput Screening")
+    print("=" * 60)
+    
+    # Initialize calculator
+    print("\n1. Initializing MACE calculator...")
+    calc = MACEInference(model="medium", device="auto")
+    
+    # Find all CIF files
+    print("\n2. Finding structure files...")
+    cif_files = list(STRUCTURES_DIR.glob("*.cif"))
+    print(f"   Found {len(cif_files)} structure files:")
+    for f in cif_files:
+        print(f"     - {f.name}")
+    
+    # Process each structure
+    print("\n" + "=" * 60)
+    print("3. Processing Structures")
+    print("=" * 60)
+    
+    results = []
+    
+    for cif_path in cif_files:
+        print(f"\n   Processing: {cif_path.name}")
+        
+        # Load structure
+        atoms = read(str(cif_path))
+        formula = atoms.get_chemical_formula()
+        n_atoms = len(atoms)
+        
+        # Single-point calculation
+        sp_result = calc.single_point(atoms)
+        
+        # Structure optimization
+        opt_result = calc.optimize(atoms, fmax=0.05, steps=30)
+        
+        # Collect results
+        result = {
+            'filename': cif_path.name,
+            'formula': formula,
+            'n_atoms': n_atoms,
+            'energy': sp_result['energy'],
+            'energy_per_atom': sp_result['energy'] / n_atoms,
+            'max_force': max(abs(sp_result['forces'].flatten())),
+            'optimized_energy': opt_result.get_potential_energy() if hasattr(opt_result, 'get_potential_energy') else None,
+            'volume': atoms.cell.volume,
         }
-    json.dump(export_data, f, indent=2)
+        results.append(result)
+        
+        print(f"     Formula: {formula}")
+        print(f"     Energy: {result['energy']:.4f} eV")
+        print(f"     Energy/atom: {result['energy_per_atom']:.4f} eV")
+        print(f"     Max force: {result['max_force']:.4f} eV/Å")
+    
+    # Comparative analysis
+    print("\n" + "=" * 60)
+    print("4. Comparative Analysis")
+    print("=" * 60)
+    
+    # Sort by energy per atom
+    results_sorted = sorted(results, key=lambda x: x['energy_per_atom'])
+    
+    print("\n   Structures ranked by stability (energy/atom):")
+    print(f"   {'Rank':<6} {'Name':<25} {'E/atom (eV)':<12} {'N atoms':<10}")
+    print("   " + "-" * 55)
+    
+    for i, r in enumerate(results_sorted, 1):
+        print(f"   {i:<6} {r['formula']:<25} {r['energy_per_atom']:<12.4f} {r['n_atoms']:<10}")
+    
+    # Screening criteria
+    print("\n" + "=" * 60)
+    print("5. Screening with Criteria")
+    print("=" * 60)
+    
+    # Example: screen for well-converged structures
+    converged_threshold = 0.1  # eV/Å
+    
+    converged = [r for r in results if r['max_force'] < converged_threshold]
+    not_converged = [r for r in results if r['max_force'] >= converged_threshold]
+    
+    print(f"\n   Force convergence threshold: {converged_threshold} eV/Å")
+    print(f"   Converged structures: {len(converged)}")
+    print(f"   Need optimization: {len(not_converged)}")
+    
+    if not_converged:
+        print("\n   Structures needing optimization:")
+        for r in not_converged:
+            print(f"     - {r['formula']}: max force = {r['max_force']:.4f} eV/Å")
+    
+    # Save results
+    print("\n" + "=" * 60)
+    print("6. Saving Results")
+    print("=" * 60)
+    
+    output_file = EXAMPLES_DIR / "screening_results.json"
+    
+    with open(output_file, 'w') as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"   Results saved to: {output_file.name}")
+    
+    # Summary
+    print("\n" + "=" * 60)
+    print("Summary")
+    print("=" * 60)
+    print(f"   Structures processed: {len(results)}")
+    print(f"   Most stable: {results_sorted[0]['formula']} ({results_sorted[0]['energy_per_atom']:.4f} eV/atom)")
+    if len(results_sorted) > 1:
+        print(f"   Least stable: {results_sorted[-1]['formula']} ({results_sorted[-1]['energy_per_atom']:.4f} eV/atom)")
+    print("\n✅ Example 5 completed successfully!")
 
-print("✓ Results saved to screening_results.json")
 
-# Save optimized structures
-for name, atoms in optimized_structures.items():
-    filename = f"optimized_{name}.cif"
-    atoms.write(filename)
-    print(f"✓ Saved {filename}")
-
-print("\n=== Summary ===")
-print(f"Screened {len(structures_to_screen)} structures")
-print(f"Average time per structure: {elapsed/len(structures_to_screen):.2f} s")
+if __name__ == "__main__":
+    main()

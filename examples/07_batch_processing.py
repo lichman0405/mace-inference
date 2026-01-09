@@ -1,199 +1,191 @@
 #!/usr/bin/env python
 """
-Example 07: Batch Processing and Progress Callbacks
+Example 7: Batch Processing and Utilities
 
 This example demonstrates:
-1. Batch single-point calculations on multiple structures
-2. Batch structure optimization
-3. Using progress callbacks for long-running tasks
-4. Error handling in batch operations
-
-Batch processing is more efficient than individual calls as it reuses
-the calculator and provides better progress tracking.
+- Batch single-point calculations
+- File I/O utilities
+- Error handling and progress tracking
 """
 
-from mace_inference import MACEInference
-from ase.build import bulk, molecule, fcc111, add_adsorbate
-from ase import Atoms
-import numpy as np
-import tempfile
 from pathlib import Path
+from ase.io import read, write
+from ase import Atoms
+from mace_inference import MACEInference
+import json
 
-
-def simple_progress(current: int, total: int) -> None:
-    """Simple progress callback that prints to console."""
-    percent = 100.0 * current / total
-    bar_length = 30
-    filled = int(bar_length * current / total)
-    bar = "=" * filled + "-" * (bar_length - filled)
-    print(f"\rProgress: [{bar}] {percent:5.1f}% ({current}/{total})", end="", flush=True)
-    if current == total:
-        print()  # New line when complete
+EXAMPLES_DIR = Path(__file__).parent
+STRUCTURES_DIR = EXAMPLES_DIR / "structures"
+OUTPUT_DIR = EXAMPLES_DIR / "output"
 
 
 def main():
     print("=" * 60)
-    print("MACE Inference: Batch Processing Example")
+    print("Example 7: Batch Processing and Utilities")
     print("=" * 60)
+    
+    # Create output directory
+    OUTPUT_DIR.mkdir(exist_ok=True)
     
     # Initialize calculator
     print("\n1. Initializing MACE calculator...")
-    calc = MACEInference(model="small", device="auto")
-    print(f"   Calculator: {calc}")
+    calc = MACEInference(model="medium", device="auto")
     
-    # =========================================================================
-    # Part 1: Batch Single-Point Calculations
-    # =========================================================================
+    # Load multiple structures
+    print("\n2. Loading structures...")
+    structures = []
+    
+    for cif_path in STRUCTURES_DIR.glob("*.cif"):
+        atoms = read(str(cif_path))
+        atoms.info['source_file'] = cif_path.name
+        structures.append(atoms)
+        print(f"   ✓ {cif_path.name}: {atoms.get_chemical_formula()}")
+    
+    print(f"\n   Total: {len(structures)} structures loaded")
+    
+    # Batch single-point calculation
     print("\n" + "=" * 60)
-    print("Part 1: Batch Single-Point Calculations")
+    print("3. Batch Single-Point Calculations")
     print("=" * 60)
     
-    # Create multiple test structures
-    structures = [
-        bulk("Cu", "fcc", a=3.6),           # FCC copper
-        bulk("Al", "fcc", a=4.05),          # FCC aluminum
-        bulk("Fe", "bcc", a=2.87),          # BCC iron
-        bulk("Ni", "fcc", a=3.52),          # FCC nickel
-        bulk("Pt", "fcc", a=3.92),          # FCC platinum
-    ]
+    results = []
     
-    print(f"\n   Created {len(structures)} bulk metal structures")
+    for i, atoms in enumerate(structures, 1):
+        source = atoms.info.get('source_file', f'structure_{i}')
+        print(f"\n   [{i}/{len(structures)}] Processing {source}...")
+        
+        try:
+            # Calculate
+            result = calc.single_point(atoms)
+            
+            # Store results in atoms.info
+            atoms.info['mace_energy'] = result['energy']
+            atoms.info['mace_energy_per_atom'] = result['energy'] / len(atoms)
+            atoms.info['mace_max_force'] = float(abs(result['forces']).max())
+            
+            results.append({
+                'source': source,
+                'formula': atoms.get_chemical_formula(),
+                'n_atoms': len(atoms),
+                'energy': result['energy'],
+                'energy_per_atom': result['energy'] / len(atoms),
+                'max_force': float(abs(result['forces']).max()),
+                'status': 'success'
+            })
+            
+            print(f"       Energy: {result['energy']:.4f} eV")
+            print(f"       Status: ✓ Success")
+            
+        except Exception as e:
+            results.append({
+                'source': source,
+                'formula': atoms.get_chemical_formula(),
+                'status': 'failed',
+                'error': str(e)
+            })
+            print(f"       Status: ✗ Failed - {e}")
     
-    # Perform batch single-point calculations with progress callback
-    print("\n   Running batch single-point calculations...")
-    results = calc.batch_single_point(
-        structures,
-        progress_callback=simple_progress
-    )
-    
-    # Display results
-    print("\n   Results:")
-    print("   " + "-" * 50)
-    elements = ["Cu", "Al", "Fe", "Ni", "Pt"]
-    for elem, result in zip(elements, results):
-        if result.get("success", True):
-            energy = result["energy"]
-            forces_max = np.max(np.abs(result["forces"]))
-            print(f"   {elem}: E = {energy:10.4f} eV, max|F| = {forces_max:.4f} eV/A")
-        else:
-            print(f"   {elem}: ERROR - {result.get('error', 'Unknown')}")
-    
-    # =========================================================================
-    # Part 2: Batch Structure Optimization
-    # =========================================================================
+    # Export results
     print("\n" + "=" * 60)
-    print("Part 2: Batch Structure Optimization")
+    print("4. Exporting Results")
     print("=" * 60)
     
-    # Create structures with small perturbations
-    perturbed_structures = []
-    for i, atoms in enumerate(structures[:3]):
-        perturbed = atoms.copy()
-        # Add random perturbations to positions
-        perturbed.positions += np.random.randn(*perturbed.positions.shape) * 0.1
-        perturbed_structures.append(perturbed)
+    # Save as JSON
+    json_path = OUTPUT_DIR / "batch_results.json"
+    with open(json_path, 'w') as f:
+        json.dump(results, f, indent=2)
+    print(f"   ✓ JSON results: {json_path.name}")
     
-    print(f"\n   Created {len(perturbed_structures)} perturbed structures")
-    
-    # Create temporary output directory
-    with tempfile.TemporaryDirectory() as tmpdir:
-        output_dir = Path(tmpdir) / "optimized"
-        
-        print("\n   Running batch optimization...")
-        opt_results = calc.batch_optimize(
-            perturbed_structures,
-            fmax=0.05,
-            steps=100,
-            output_dir=str(output_dir),
-            progress_callback=simple_progress
-        )
-        
-        # Display results
-        print("\n   Optimization Results:")
-        print("   " + "-" * 50)
-        for elem, result in zip(["Cu", "Al", "Fe"], opt_results):
-            if result.get("success", False):
-                print(f"   {elem}: E = {result['final_energy']:10.4f} eV, "
-                      f"max|F| = {result['final_max_force']:.4f} eV/A, "
-                      f"converged = {result['converged']}")
+    # Save as CSV
+    csv_path = OUTPUT_DIR / "batch_results.csv"
+    with open(csv_path, 'w') as f:
+        f.write("source,formula,n_atoms,energy,energy_per_atom,max_force,status\n")
+        for r in results:
+            if r['status'] == 'success':
+                f.write(f"{r['source']},{r['formula']},{r['n_atoms']},{r['energy']:.6f},{r['energy_per_atom']:.6f},{r['max_force']:.6f},{r['status']}\n")
             else:
-                print(f"   {elem}: ERROR - {result.get('error', 'Unknown')}")
+                f.write(f"{r['source']},{r['formula']},,,,,{r['status']}\n")
+    print(f"   ✓ CSV results: {csv_path.name}")
     
-    # =========================================================================
-    # Part 3: Progress Callbacks for MD Simulation
-    # =========================================================================
+    # Save structures with energies to XYZ
     print("\n" + "=" * 60)
-    print("Part 3: MD Simulation with Progress Callback")
+    print("5. Saving Annotated Structures")
     print("=" * 60)
     
-    # Create a small copper cluster
-    cu_bulk = bulk("Cu", "fcc", a=3.6) * (2, 2, 2)
-    print(f"\n   Structure: Cu supercell with {len(cu_bulk)} atoms")
+    for atoms in structures:
+        source = atoms.info.get('source_file', 'unknown')
+        if 'mace_energy' in atoms.info:
+            base_name = Path(source).stem
+            xyz_path = OUTPUT_DIR / f"{base_name}_annotated.xyz"
+            # Copy atoms to avoid issues with cached calculator arrays
+            atoms_copy = atoms.copy()
+            atoms_copy.info = atoms.info.copy()
+            write(str(xyz_path), atoms_copy, format='extxyz')
+            print(f"   ✓ {xyz_path.name}")
     
-    print("\n   Running NVT MD (100 steps)...")
-    
-    # Custom progress callback with timing
-    import time
-    start_time = time.time()
-    
-    def md_progress(current: int, total: int) -> None:
-        elapsed = time.time() - start_time
-        if current > 0:
-            eta = elapsed / current * (total - current)
-            print(f"\r   Step {current:5d}/{total} | "
-                  f"Elapsed: {elapsed:6.1f}s | ETA: {eta:6.1f}s", end="", flush=True)
-        if current == total:
-            print()
-    
-    with tempfile.NamedTemporaryFile(suffix=".traj", delete=False) as traj_file:
-        final_atoms = calc.run_md(
-            cu_bulk,
-            ensemble="nvt",
-            temperature_K=300,
-            steps=100,
-            timestep=1.0,
-            log_interval=10,
-            trajectory=traj_file.name,
-            progress_callback=md_progress
-        )
-    
-    print(f"\n   Final temperature: ~300 K (target)")
-    print(f"   Total time: {time.time() - start_time:.1f}s")
-    
-    # =========================================================================
-    # Part 4: Error Handling in Batch Operations
-    # =========================================================================
+    # Batch optimization
     print("\n" + "=" * 60)
-    print("Part 4: Error Handling in Batch Operations")
+    print("6. Batch Optimization")
     print("=" * 60)
     
-    # Create a mix of valid and "problematic" structures
-    mixed_structures = [
-        bulk("Cu", "fcc", a=3.6),           # Valid
-        bulk("Ag", "fcc", a=4.09),          # Valid
-        Atoms("X"),                          # Invalid element (may cause error)
-    ]
+    opt_results = []
     
-    print(f"\n   Testing batch calculations with {len(mixed_structures)} structures")
-    print("   (including one potentially problematic structure)")
+    for i, atoms in enumerate(structures, 1):
+        source = atoms.info.get('source_file', f'structure_{i}')
+        print(f"\n   [{i}/{len(structures)}] Optimizing {source}...")
+        
+        try:
+            # Copy to preserve original
+            atoms_opt = atoms.copy()
+            
+            # Optimize
+            optimized = calc.optimize(atoms_opt, fmax=0.05, steps=30)
+            
+            # Calculate energy change
+            initial_e = atoms.info.get('mace_energy', 0)
+            final_e = calc.single_point(optimized)['energy']
+            delta_e = final_e - initial_e
+            
+            opt_results.append({
+                'source': source,
+                'initial_energy': initial_e,
+                'final_energy': final_e,
+                'delta_e': delta_e,
+                'status': 'success'
+            })
+            
+            # Save optimized structure
+            base_name = Path(source).stem
+            opt_path = OUTPUT_DIR / f"{base_name}_optimized.xyz"
+            write(str(opt_path), optimized, format='extxyz')
+            
+            print(f"       ΔE: {delta_e:.4f} eV")
+            print(f"       Saved: {opt_path.name}")
+            
+        except Exception as e:
+            print(f"       Failed: {e}")
     
-    results = calc.batch_single_point(mixed_structures)
-    
-    print("\n   Results:")
-    labels = ["Cu (valid)", "Ag (valid)", "X (invalid)"]
-    for label, result in zip(labels, results):
-        if result.get("success", True):
-            print(f"   {label}: E = {result['energy']:.4f} eV")
-        else:
-            print(f"   {label}: FAILED - {result.get('error', 'Unknown error')}")
-    
-    # Count successes
-    successes = sum(1 for r in results if r.get("success", True))
-    print(f"\n   Summary: {successes}/{len(results)} successful calculations")
-    
+    # Summary statistics
     print("\n" + "=" * 60)
-    print("Batch processing example complete!")
+    print("7. Summary Statistics")
     print("=" * 60)
+    
+    successful = [r for r in results if r['status'] == 'success']
+    failed = [r for r in results if r['status'] == 'failed']
+    
+    print(f"\n   Total structures: {len(results)}")
+    print(f"   Successful: {len(successful)}")
+    print(f"   Failed: {len(failed)}")
+    
+    if successful:
+        energies = [r['energy_per_atom'] for r in successful]
+        print(f"\n   Energy per atom statistics:")
+        print(f"     Min: {min(energies):.4f} eV")
+        print(f"     Max: {max(energies):.4f} eV")
+        print(f"     Mean: {sum(energies)/len(energies):.4f} eV")
+    
+    print(f"\n   Output files saved to: {OUTPUT_DIR}")
+    print("\n✅ Example 7 completed successfully!")
 
 
 if __name__ == "__main__":

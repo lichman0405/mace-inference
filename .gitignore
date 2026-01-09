@@ -72,3 +72,4 @@ test_outputs/
 
 # Setuptools egg-info (auto-generated)
 src/*.egg-info/
+examples/output/

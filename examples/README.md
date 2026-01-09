@@ -17,6 +17,18 @@ pip install mace-inference[d3]
 pip install mace-inference[gpu]
 ```
 
+## Structure Files
+
+All examples use CIF structure files from the `structures/` directory:
+
+| File | Description |
+|------|-------------|
+| `cu_fcc.cif` | Copper FCC crystal (4 atoms) |
+| `si_diamond.cif` | Silicon diamond structure (8 atoms) |
+| `cu_paddlewheel.cif` | Cu-paddlewheel cluster (MOF building block) |
+
+You can add your own CIF files to this directory for testing.
+
 ## Examples Overview
 
 | Example | Description | Key Features |
@@ -25,9 +37,9 @@ pip install mace-inference[gpu]
 | [02_molecular_dynamics.py](02_molecular_dynamics.py) | MD simulations | NVT, NPT ensembles |
 | [03_phonon_calculation.py](03_phonon_calculation.py) | Phonon properties | Dispersion, thermal properties |
 | [04_adsorption_study.py](04_adsorption_study.py) | Gas adsorption | MOFs, binding energies |
-| [05_high_throughput.py](05_high_throughput.py) | Batch processing | Screening workflows |
+| [05_high_throughput.py](05_high_throughput.py) | Multi-structure screening | Batch comparison |
 | [06_d3_correction.py](06_d3_correction.py) | D3 correction | Dispersion interactions |
-| [07_batch_processing.py](07_batch_processing.py) | Batch API & Progress | Callbacks, error handling |
+| [07_batch_processing.py](07_batch_processing.py) | Batch API & I/O | Export results, file utilities |
 
 ---
 
@@ -37,16 +49,32 @@ pip install mace-inference[gpu]
 
 Learn the fundamentals of using MACE Inference:
 - Creating a `MACEInference` calculator
-- Loading and building structures with ASE
+- Loading structures from CIF files
 - Single-point energy calculations
 - Structure optimization
 
 ```python
+from pathlib import Path
+from ase.io import read
 from mace_inference import MACEInference
 
+# Load structure from CIF
+atoms = read("structures/cu_fcc.cif")
+
+# Initialize calculator
 calc = MACEInference(model="medium", device="auto")
+
+# Single-point calculation
 result = calc.single_point(atoms)
+print(f"Energy: {result['energy']:.4f} eV")
+
+# Optimization
 optimized = calc.optimize(atoms, fmax=0.05)
+```
+
+**Run:**
+```bash
+python 01_basic_usage.py
 ```
 
 ---
@@ -58,16 +86,32 @@ optimized = calc.optimize(atoms, fmax=0.05)
 Run molecular dynamics simulations:
 - NVT ensemble (constant temperature)
 - NPT ensemble (constant temperature and pressure)
-- Trajectory output and analysis
+- Temperature analysis
 
 ```python
+# NVT simulation
 final_atoms = calc.run_md(
     atoms,
     ensemble="nvt",
     temperature_K=300,
-    steps=10000,
-    trajectory="md.traj"
+    steps=100,
+    timestep=1.0
 )
+
+# NPT simulation
+final_atoms = calc.run_md(
+    atoms,
+    ensemble="npt",
+    temperature_K=300,
+    pressure_GPa=0.0001,
+    steps=100,
+    timestep=1.0
+)
+```
+
+**Run:**
+```bash
+python 02_molecular_dynamics.py
 ```
 
 ---
@@ -77,16 +121,26 @@ final_atoms = calc.run_md(
 **File:** `03_phonon_calculation.py`
 
 Calculate phonon properties and thermodynamics:
-- Phonon dispersion curves
-- Density of states (DOS)
+- Force constant calculation via finite displacement
 - Thermal properties (free energy, entropy, heat capacity)
 
 ```python
 result = calc.phonon(
     atoms,
     supercell_matrix=[2, 2, 2],
-    temperature_range=(0, 1000, 10)
+    displacement=0.01,
+    mesh=[10, 10, 10],
+    temperature_range=(0, 800, 50)
 )
+
+# Access thermal properties
+thermal = result['thermal']
+print(f"Cv at 300K: {thermal['heat_capacity'][6]:.2f} J/(mol·K)")
+```
+
+**Run:**
+```bash
+python 03_phonon_calculation.py
 ```
 
 ---
@@ -98,15 +152,27 @@ result = calc.phonon(
 Study gas adsorption in porous materials:
 - Adsorption energy calculation
 - Multiple gas molecules (CO2, H2O, CH4, N2)
-- D3 correction for van der Waals interactions
+- Coordination number analysis
 
 ```python
-calc = MACEInference(model="medium", enable_d3=True)
+# Calculate adsorption energy
 result = calc.adsorption_energy(
-    framework=mof,
-    adsorbate="CO2",
-    site_position=[10.0, 10.0, 10.0]
+    framework=framework,
+    adsorbate=co2,
+    adsorption_site=[5.0, 5.0, 5.0],
+    optimize=True,
+    fix_framework=True
 )
+print(f"Adsorption energy: {result['adsorption_energy']:.4f} eV")
+
+# Coordination analysis
+coord = calc.coordination_analysis(framework, cutoff=3.0)
+print(f"Average CN: {coord['average_coordination']:.2f}")
+```
+
+**Run:**
+```bash
+python 04_adsorption_study.py
 ```
 
 ---
@@ -115,16 +181,27 @@ result = calc.adsorption_energy(
 
 **File:** `05_high_throughput.py`
 
-Batch processing multiple structures:
-- Efficient calculator reuse
-- Parallel-friendly workflow
-- Results aggregation and export
+Process multiple structures efficiently:
+- Automatic CIF file discovery
+- Property comparison across materials
+- Results export to JSON
 
 ```python
-for name, atoms in structures.items():
+# Process all CIF files
+for cif_path in structures_dir.glob("*.cif"):
+    atoms = read(str(cif_path))
     result = calc.single_point(atoms)
-    optimized = calc.optimize(atoms)
-    bm = calc.bulk_modulus(optimized)
+    
+    # Collect and compare
+    results.append({
+        'formula': atoms.get_chemical_formula(),
+        'energy_per_atom': result['energy'] / len(atoms)
+    })
+```
+
+**Run:**
+```bash
+python 05_high_throughput.py
 ```
 
 ---
@@ -133,89 +210,93 @@ for name, atoms in structures.items():
 
 **File:** `06_d3_correction.py`
 
-Using DFT-D3 dispersion correction:
-- When to use D3 (layered materials, molecular crystals)
-- Comparing results with/without D3
-- Different damping functions (bj, zero, zerom, bjm)
-- Different XC functional parameters
+Use DFT-D3 dispersion correction:
+- Enable D3 for van der Waals interactions
+- Compare with and without D3
+- Guidelines for when to use D3
 
 ```python
-calc = MACEInference(
+# Without D3
+calc_no_d3 = MACEInference(model="medium", use_d3=False)
+
+# With D3
+calc_with_d3 = MACEInference(
     model="medium",
-    enable_d3=True,
-    d3_damping="bj",
-    d3_xc="pbe"
+    use_d3=True,
+    d3_xc="pbe",
+    d3_cutoff=40.0
 )
+
+# Compare energies
+e_mace = calc_no_d3.single_point(atoms)['energy']
+e_d3 = calc_with_d3.single_point(atoms)['energy']
+print(f"D3 correction: {e_d3 - e_mace:.4f} eV")
+```
+
+**Run:**
+```bash
+python 06_d3_correction.py
 ```
 
 ---
 
-## 07. Batch Processing and Progress Callbacks
+## 07. Batch Processing
 
 **File:** `07_batch_processing.py`
 
-Efficient batch processing with progress tracking:
-- Batch single-point calculations on multiple structures
-- Batch structure optimization
-- Progress callbacks for long-running tasks
-- Error handling in batch operations
+Efficient batch processing utilities:
+- Batch calculations with error handling
+- Export to JSON and CSV
+- Save annotated structures (XYZ with energies)
+- Batch optimization
 
 ```python
-# Batch calculations with progress callback
-def progress(current, total):
-    print(f"Processing {current}/{total}")
+# Process with error handling
+for atoms in structures:
+    try:
+        result = calc.single_point(atoms)
+        atoms.info['mace_energy'] = result['energy']
+    except Exception as e:
+        print(f"Failed: {e}")
 
-results = calc.batch_single_point(
-    structures,
-    progress_callback=progress
-)
+# Export results
+with open("results.json", "w") as f:
+    json.dump(results, f)
+```
 
-# Batch optimization with output
-opt_results = calc.batch_optimize(
-    structures,
-    fmax=0.05,
-    output_dir="optimized/"
-)
-
-# MD with progress callback
-final = calc.run_md(
-    atoms,
-    steps=10000,
-    progress_callback=progress
-)
+**Run:**
+```bash
+python 07_batch_processing.py
 ```
 
 ---
 
-## Running Examples
+## Running All Examples
+
+To run all examples sequentially:
 
 ```bash
-# Run a specific example
-python examples/01_basic_usage.py
-
-# Run with GPU acceleration
-CUDA_VISIBLE_DEVICES=0 python examples/02_molecular_dynamics.py
+cd examples
+python 01_basic_usage.py
+python 02_molecular_dynamics.py
+python 03_phonon_calculation.py
+python 04_adsorption_study.py
+python 05_high_throughput.py
+python 06_d3_correction.py
+python 07_batch_processing.py
 ```
 
 ## Output Files
 
-Examples may generate the following output files:
-- `*.cif`, `*.xyz` - Structure files
-- `*.traj` - ASE trajectory files
-- `*.log` - Optimization/MD log files
-- `phonopy.yaml` - Phonopy output files
+Some examples generate output files:
+- `screening_results.json` - Results from example 05
+- `output/` directory - Results from example 07
+
+These are automatically created and can be safely deleted.
 
 ## Tips
 
-1. **First run**: The first run downloads MACE models (~100-500 MB) and may take longer.
-
-2. **Device selection**: Use `device="auto"` for automatic GPU detection, or specify `device="cuda"` or `device="cpu"`.
-
-3. **Memory**: For large systems, consider using the "small" model or running on CPU with more RAM.
-
-4. **D3 correction**: Enable for systems with significant dispersion interactions (layered materials, molecular crystals, gas adsorption).
-
-## Need Help?
-
-- [Documentation](https://github.com/lichman0405/mace-inference#readme)
-- [Issue Tracker](https://github.com/lichman0405/mace-inference/issues)
+1. **First run**: The first run will download the MACE model (~400 MB) to `~/.cache/mace/`
+2. **Device selection**: Use `device="auto"` to automatically select GPU if available
+3. **Custom structures**: Replace CIF files in `structures/` with your own
+4. **Memory**: For large systems, reduce supercell size in phonon calculations
