@@ -18,22 +18,35 @@ All examples are available in the [`examples/`](https://github.com/lichman0405/m
 
 ## Running Examples
 
-To run the examples, first clone the repository:
+### Option 1: Using Installed Package
+
+If you installed via PyPI:
 
 ```bash
+# Install the package
+pip install mace-inference
+
+# Download examples
 git clone https://github.com/lichman0405/mace-inference.git
 cd mace-inference
+
+# Run an example
+python examples/01_basic_usage.py
 ```
 
-Install the package:
+### Option 2: From Source
+
+If you want to modify and develop:
 
 ```bash
+# Clone the repository
+git clone https://github.com/lichman0405/mace-inference.git
+cd mace-inference
+
+# Install in development mode
 pip install -e .
-```
 
-Run an example:
-
-```bash
+# Run an example
 python examples/01_basic_usage.py
 ```
 

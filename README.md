@@ -3,8 +3,9 @@
 <div align="center">
 
 [![CI](https://github.com/lichman0405/mace-inference/workflows/CI/badge.svg)](https://github.com/lichman0405/mace-inference/actions)
-[![PyPI version](https://badge.fury.io/py/mace-inference.svg)](https://badge.fury.io/py/mace-inference)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://img.shields.io/pypi/v/mace-inference.svg)](https://pypi.org/project/mace-inference/)
+[![Downloads](https://img.shields.io/pypi/dm/mace-inference.svg)](https://pypi.org/project/mace-inference/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mace-inference.svg)](https://pypi.org/project/mace-inference/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **High-level Python library for MACE machine learning force field inference tasks**

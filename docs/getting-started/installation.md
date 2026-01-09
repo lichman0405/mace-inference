@@ -50,9 +50,8 @@ We recommend using a dedicated conda environment:
     conda create -n mace-inference python=3.10
     conda activate mace-inference
     
-    # Install dependencies
-    pip install -r requirements-cpu.txt
-    pip install -e .
+    # Install mace-inference
+    pip install mace-inference
     ```
 
 === "GPU"
@@ -65,9 +64,8 @@ We recommend using a dedicated conda environment:
     # Install PyTorch with CUDA
     conda install pytorch pytorch-cuda=11.8 -c pytorch -c nvidia
     
-    # Install dependencies
-    pip install -r requirements-gpu.txt
-    pip install -e .
+    # Install mace-inference with GPU support
+    pip install mace-inference[gpu]
     ```
 
 ## Optional Dependencies

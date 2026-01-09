@@ -99,7 +99,7 @@ mace-inference/
 
 ## 🚀 Installation Steps
 
-### Method 1: From PyPI (Coming Soon)
+### Method 1: From PyPI (Recommended)
 
 ```bash
 # Basic installation
@@ -115,7 +115,7 @@ pip install mace-inference[gpu]
 pip install mace-inference[all]
 ```
 
-### Method 2: Local Development Installation (Recommended for now)
+### Method 2: Local Development Installation
 
 ```bash
 # 1. Clone or navigate to project directory

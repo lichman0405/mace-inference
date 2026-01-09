@@ -2,17 +2,30 @@
 
 ## Installation
 
+### From PyPI (Recommended)
+
 ```bash
 # Basic installation (CPU)
-pip install -e .
+pip install mace-inference
 
 # With D3 dispersion correction
-pip install -e ".[d3]"
+pip install mace-inference[d3]
 
 # With GPU support
-pip install -e ".[gpu]"
+pip install mace-inference[gpu]
 
 # Full installation (all features)
+pip install mace-inference[all]
+```
+
+### From Source (Development)
+
+```bash
+# Clone repository
+git clone https://github.com/lichman0405/mace-inference.git
+cd mace-inference
+
+# Install in editable mode
 pip install -e ".[all]"
 ```
 

@@ -1,13 +1,15 @@
 # MACE Inference
 
 <div align="center">
-  <p><strong>High-level Python interface for MACE machine learning interatomic potentials</strong></p>
-  <p>
-    <a href="https://github.com/lichman0405/mace-inference/actions"><img src="https://github.com/lichman0405/mace-inference/workflows/CI/badge.svg" alt="CI Status"></a>
-    <a href="https://pypi.org/project/mace-inference/"><img src="https://img.shields.io/pypi/v/mace-inference.svg" alt="PyPI version"></a>
-    <a href="https://pypi.org/project/mace-inference/"><img src="https://img.shields.io/pypi/pyversions/mace-inference.svg" alt="Python versions"></a>
-    <a href="https://github.com/lichman0405/mace-inference/blob/main/LICENSE"><img src="https://img.shields.io/github/license/lichman0405/mace-inference.svg" alt="License"></a>
-  </p>
+
+**High-level Python interface for MACE machine learning interatomic potentials**
+
+[![CI](https://github.com/lichman0405/mace-inference/workflows/CI/badge.svg)](https://github.com/lichman0405/mace-inference/actions)
+[![PyPI version](https://img.shields.io/pypi/v/mace-inference.svg)](https://pypi.org/project/mace-inference/)
+[![Downloads](https://img.shields.io/pypi/dm/mace-inference.svg)](https://pypi.org/project/mace-inference/)
+[![Python Version](https://img.shields.io/pypi/pyversions/mace-inference.svg)](https://pypi.org/project/mace-inference/)
+[![License](https://img.shields.io/github/license/lichman0405/mace-inference.svg)](https://github.com/lichman0405/mace-inference/blob/main/LICENSE)
+
 </div>
 
 ---
