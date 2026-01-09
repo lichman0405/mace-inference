@@ -65,6 +65,7 @@ optimized_*.cif
 nvt_md.*
 npt_md.*
 thermal_properties.png
+test_outputs/
 
 # mypy
 .mypy_cache/

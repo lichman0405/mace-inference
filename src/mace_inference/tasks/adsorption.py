@@ -12,67 +12,70 @@ if TYPE_CHECKING:
 
 
 def calculate_adsorption_energy(
-    mof_atoms: Atoms,
-    gas_molecule: Union[str, Atoms],
+    framework: Atoms,
+    adsorbate: Union[str, Atoms],
     site_position: List[float],
     calculator: "Calculator",
-    optimize_complex: bool = True,
-    fmax: float = 0.05
+    optimize: bool = True,
+    fmax: float = 0.05,
+    fix_framework: bool = True
 ) -> "AdsorptionResult":
     """
-    Calculate gas adsorption energy in MOF.
+    Calculate gas adsorption energy in framework (MOF, zeolite, etc.).
     
-    E_ads = E(MOF+gas) - E(MOF) - E(gas)
+    E_ads = E(framework+adsorbate) - E(framework) - E(adsorbate)
     
     Args:
-        mof_atoms: MOF structure (ASE Atoms)
-        gas_molecule: Gas molecule name (e.g., "CO2") or Atoms object
+        framework: Framework structure (MOF, zeolite, etc.) as ASE Atoms
+        adsorbate: Adsorbate molecule name (e.g., "CO2") or Atoms object
         site_position: Adsorption site position [x, y, z]
         calculator: ASE calculator
-        optimize_complex: Whether to optimize the adsorption complex
+        optimize: Whether to optimize the adsorption complex
         fmax: Force convergence for optimization
+        fix_framework: Whether to fix framework atoms during optimization
         
     Returns:
         Dictionary with adsorption energy and structures
     """
-    # 1. Calculate MOF energy
-    mof_copy = mof_atoms.copy()
-    mof_copy.calc = calculator
-    E_mof = mof_copy.get_potential_energy()
+    # 1. Calculate framework energy
+    framework_copy = framework.copy()
+    framework_copy.calc = calculator
+    E_framework = framework_copy.get_potential_energy()
     
-    # 2. Get gas molecule
-    if isinstance(gas_molecule, str):
-        gas = molecule(gas_molecule)
-    elif isinstance(gas_molecule, Atoms):
-        gas = gas_molecule.copy()
+    # 2. Get adsorbate molecule
+    if isinstance(adsorbate, str):
+        ads = molecule(adsorbate)
+    elif isinstance(adsorbate, Atoms):
+        ads = adsorbate.copy()
     else:
-        raise TypeError("gas_molecule must be str or Atoms object")
+        raise TypeError("adsorbate must be str or Atoms object")
     
-    # Calculate gas energy (in vacuum)
-    gas.calc = calculator
-    gas.center(vacuum=10.0)  # Add vacuum around molecule
-    E_gas = gas.get_potential_energy()
+    # Calculate adsorbate energy (in vacuum)
+    ads.calc = calculator
+    ads.center(vacuum=10.0)  # Add vacuum around molecule
+    E_ads_mol = ads.get_potential_energy()
     
     # 3. Create adsorption complex
-    complex_atoms = mof_copy.copy()
+    complex_atoms = framework_copy.copy()
     
-    # Position gas molecule at adsorption site
-    gas_centered = gas.copy()
-    gas_com = gas_centered.get_center_of_mass()
-    translation = np.array(site_position) - gas_com
-    gas_centered.translate(translation)
+    # Position adsorbate molecule at adsorption site
+    ads_centered = ads.copy()
+    ads_com = ads_centered.get_center_of_mass()
+    translation = np.array(site_position) - ads_com
+    ads_centered.translate(translation)
     
     # Combine structures
-    complex_atoms += gas_centered
+    complex_atoms += ads_centered
     complex_atoms.calc = calculator
     
     # 4. Optimize complex if requested
-    if optimize_complex:
-        # Fix MOF atoms, only optimize gas molecule
-        from ase.constraints import FixAtoms
-        n_mof_atoms = len(mof_atoms)
-        constraint = FixAtoms(indices=range(n_mof_atoms))
-        complex_atoms.set_constraint(constraint)
+    if optimize:
+        # Fix framework atoms if requested, only optimize adsorbate
+        if fix_framework:
+            from ase.constraints import FixAtoms
+            n_framework_atoms = len(framework)
+            constraint = FixAtoms(indices=range(n_framework_atoms))
+            complex_atoms.set_constraint(constraint)
         
         opt = LBFGS(complex_atoms)
         opt.run(fmax=fmax)
@@ -80,15 +83,15 @@ def calculate_adsorption_energy(
     E_complex = complex_atoms.get_potential_energy()
     
     # 5. Calculate adsorption energy
-    E_ads = E_complex - E_mof - E_gas
+    E_ads = E_complex - E_framework - E_ads_mol
     
     result = {
         "E_ads": E_ads,              # Adsorption energy (eV)
-        "E_mof": E_mof,              # MOF energy (eV)
-        "E_gas": E_gas,              # Gas energy (eV)
+        "E_mof": E_framework,        # Framework energy (eV) - kept as E_mof for backward compatibility
+        "E_gas": E_ads_mol,          # Adsorbate energy (eV) - kept as E_gas for backward compatibility
         "E_complex": E_complex,      # Complex energy (eV)
         "complex_structure": complex_atoms,
-        "optimized": optimize_complex
+        "optimized": optimize
     }
     
     return result

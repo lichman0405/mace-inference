@@ -65,10 +65,11 @@ def calculate_phonon(
     
     for i, scell in enumerate(supercells):
         # Convert Phonopy atoms to ASE atoms
+        # PhonopyAtoms uses .symbols instead of .get_chemical_symbols()
         ase_scell = Atoms(
-            symbols=scell.get_chemical_symbols(),
-            positions=scell.get_positions(),
-            cell=scell.get_cell(),
+            symbols=scell.symbols,
+            positions=scell.positions,
+            cell=scell.cell,
             pbc=True
         )
         ase_scell.calc = calculator

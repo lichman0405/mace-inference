@@ -261,10 +261,10 @@ class TestAdsorptionEnergy:
             
             calc = MACEInference(model="medium", device="cpu")
             result = calc.adsorption_energy(
-                mof_structure=simple_mof,
-                gas_molecule="CO2",
+                framework=simple_mof,
+                adsorbate="CO2",
                 site_position=[5.0, 5.0, 5.0],
-                optimize_complex=False  # Skip optimization for faster test
+                optimize=False  # Skip optimization for faster test
             )
             
             assert "E_ads" in result

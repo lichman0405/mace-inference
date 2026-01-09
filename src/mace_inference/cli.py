@@ -2,6 +2,7 @@
 
 import click
 import sys
+import numpy as np
 from pathlib import Path
 
 from mace_inference import __version__
@@ -191,9 +192,9 @@ def adsorption(mof, model, device, d3, gas, site, optimize):
     
     result = calc.adsorption_energy(
         mof,
-        gas_molecule=gas,
+        adsorbate=gas,
         site_position=list(site),
-        optimize_complex=optimize
+        optimize=optimize
     )
     
     click.echo("\n=== Adsorption Energy Results ===")
@@ -235,5 +236,4 @@ def info(verbose):
 
 
 if __name__ == '__main__':
-    import numpy as np  # Import here for phonon command
     main()

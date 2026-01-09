@@ -322,9 +322,12 @@ class MACEInference:
         
         # Calculate thermal properties if requested
         if temperature_range is not None:
+            t_min, t_max, t_step = temperature_range
             thermal = calculate_thermal_properties(
                 result["phonon"],
-                temperature_range=temperature_range
+                t_min=t_min,
+                t_max=t_max,
+                t_step=t_step
             )
             result["thermal"] = thermal
         
@@ -333,27 +336,29 @@ class MACEInference:
     def bulk_modulus(
         self,
         structure: Union[str, Path, Atoms],
-        strain_range: float = 0.05,
-        n_points: int = 7,
+        scale_range: tuple = (0.95, 1.05),
+        n_points: int = 11,
         optimize_first: bool = True,
-        fmax: float = 0.01
+        fmax: float = 0.01,
+        eos_type: str = "birchmurnaghan"
     ) -> Dict[str, Any]:
         """
         Calculate bulk modulus.
         
         Args:
             structure: Input structure
-            strain_range: Maximum strain for volume sweep
-            n_points: Number of strain points
+            scale_range: Volume scaling range as (min_scale, max_scale)
+            n_points: Number of volume points for EOS fitting
             optimize_first: Whether to optimize structure first
             fmax: Force criterion for optimization
+            eos_type: Equation of state type ("birchmurnaghan", "murnaghan", etc.)
             
         Returns:
             Dictionary with bulk modulus results
             
         Examples:
             >>> result = calc.bulk_modulus("structure.cif")
-            >>> print(f"Bulk modulus: {result['bulk_modulus_GPa']:.1f} GPa")
+            >>> print(f"Bulk modulus: {result['B_GPa']:.1f} GPa")
         """
         atoms = parse_structure_input(structure)
         
@@ -369,8 +374,9 @@ class MACEInference:
         return calculate_bulk_modulus(
             atoms=atoms,
             calculator=self.calculator,
-            strain_range=strain_range,
-            n_points=n_points
+            n_points=n_points,
+            scale_range=scale_range,
+            eos_type=eos_type
         )
     
     def adsorption_energy(
