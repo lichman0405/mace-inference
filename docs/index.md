@@ -1,6 +1,6 @@
 # MACE Inference
 
-<div align="center">
+<div align="center" markdown>
 
 **High-level Python interface for MACE machine learning interatomic potentials**
 
