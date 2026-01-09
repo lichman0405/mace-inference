@@ -48,12 +48,17 @@ gpu = [
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=3.0.0",
-    "black>=22.0.0",
-    "flake8>=4.0.0",
+    "ruff>=0.1.0",
     "mypy>=0.950",
 ]
+docs = [
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.24.0",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-literate-nav>=0.6.0",
+]
 all = [
-    "mace-inference[d3,gpu,dev]",
+    "mace-inference[d3,gpu,dev,docs]",
 ]
 
 [project.scripts]
@@ -61,7 +66,7 @@ mace-infer = "mace_inference.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/lichman0405/mace-inference"
-Documentation = "https://github.com/lichman0405/mace-inference#readme"
+Documentation = "https://lichman0405.github.io/mace-inference/"
 Repository = "https://github.com/lichman0405/mace-inference"
 Issues = "https://github.com/lichman0405/mace-inference/issues"
 

@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CI/CD**: GitHub Actions workflow for automated testing (Python 3.9, 3.10, 3.11)
+- **Documentation**: MkDocs Material documentation with GitHub Pages deployment
+- **API docs**: Auto-generated API reference using mkdocstrings
 - Type hints improvements with `py.typed` marker
 - Comprehensive test suite with pytest fixtures
 - CLI tests using Click's CliRunner
@@ -20,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New example: D3 dispersion correction usage (`06_d3_correction.py`)
 - New example: Batch processing and progress callbacks (`07_batch_processing.py`)
 - Examples README with overview of all examples
+- Example structure files (CIF) for all examples
 
 ### Changed
 - Version management now uses `importlib.metadata` for single source of truth
@@ -28,11 +32,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python version requirement upgraded from 3.8 to 3.9+
 - Enhanced type annotations across all modules
 - Mypy configuration added for static type checking
+- Updated README with GitHub Pages documentation links
+- Updated pyproject.toml with `docs` optional dependencies
 
 ### Fixed
+- API parameter mismatch issues in `run_phonon_analysis()`, `run_md_simulation()`, `run_adsorption_study()`
+- Incorrect return key handling in adsorption energy calculations
 - Missing `py.typed` marker file for type checker support
 - Missing `tests/__init__.py` for proper test discovery
 - Incomplete utility function exports in `utils/__init__.py`
+- All 7 examples updated with correct API usage
 
 ## [0.1.0] - 2026-01-08
 

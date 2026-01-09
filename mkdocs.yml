@@ -1,0 +1,118 @@
+site_name: MACE Inference
+site_description: High-level Python interface for MACE machine learning interatomic potentials
+site_url: https://lichman0405.github.io/mace-inference/
+repo_url: https://github.com/lichman0405/mace-inference
+repo_name: lichman0405/mace-inference
+
+theme:
+  name: material
+  language: en
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            heading_level: 2
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/lichman0405/mace-inference
+  generator: false
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+  - User Guide:
+      - Overview: user-guide/overview.md
+      - Single Point Calculations: user-guide/single-point.md
+      - Structure Optimization: user-guide/optimization.md
+      - Molecular Dynamics: user-guide/molecular-dynamics.md
+      - Phonon Calculations: user-guide/phonons.md
+      - Mechanical Properties: user-guide/mechanics.md
+      - Adsorption Studies: user-guide/adsorption.md
+      - D3 Dispersion Correction: user-guide/d3-correction.md
+  - API Reference:
+      - MACEInference: api/core.md
+      - Tasks: api/tasks.md
+      - Utilities: api/utils.md
+      - Types: api/types.md
+      - CLI: api/cli.md
+  - Examples:
+      - Overview: examples/index.md
+      - Basic Usage: examples/basic-usage.md
+      - Molecular Dynamics: examples/molecular-dynamics.md
+      - Phonon Calculation: examples/phonon-calculation.md
+      - Adsorption Study: examples/adsorption-study.md
+      - High Throughput: examples/high-throughput.md
+      - D3 Correction: examples/d3-correction.md
+      - Batch Processing: examples/batch-processing.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md

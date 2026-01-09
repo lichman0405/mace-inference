@@ -2,13 +2,14 @@
 
 <div align="center">
 
+[![CI](https://github.com/lichman0405/mace-inference/workflows/CI/badge.svg)](https://github.com/lichman0405/mace-inference/actions)
 [![PyPI version](https://badge.fury.io/py/mace-inference.svg)](https://badge.fury.io/py/mace-inference)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **High-level Python library for MACE machine learning force field inference tasks**
 
-[Installation](#-installation) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Examples](#-examples)
+[Documentation](https://lichman0405.github.io/mace-inference/) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Examples](#-examples)
 
 </div>
 
@@ -72,11 +73,11 @@ atoms = read("structure.cif")
 # Single-point energy calculation
 result = calc.single_point(atoms)
 print(f"Energy: {result['energy']:.4f} eV")
-print(f"Max Force: {result['forces'].max():.4f} eV/Å")
+print(f"Max Force: {result['max_force']:.4f} eV/Å")
 
 # Structure optimization
-optimized = calc.optimize(atoms, fmax=0.05)
-optimized.write("optimized.cif")
+optimized = calc.optimize(atoms, fmax=0.05)  # Returns Atoms object
+# Save with: from ase.io import write; write("optimized.cif", optimized)
 
 # Molecular dynamics (NVT)
 trajectory = calc.run_md(
@@ -90,12 +91,12 @@ trajectory = calc.run_md(
 phonon_result = calc.phonon(atoms, supercell_matrix=[2, 2, 2])
 
 # Adsorption energy
-E_ads = calc.adsorption_energy(
+result = calc.adsorption_energy(
     framework=mof,
     adsorbate="CO2",
     site_position=[10.0, 10.0, 10.0]
 )
-print(f"Adsorption Energy: {E_ads['adsorption_energy']:.3f} eV")
+print(f"Adsorption Energy: {result['E_ads']:.3f} eV")
 
 # Batch processing with progress callback
 def progress(current, total):
@@ -133,10 +134,13 @@ mace-infer adsorption mof.cif --gas CO2 --site 10.0 10.0 10.0
 
 ## 📚 Documentation
 
-- **[API Reference](API_REFERENCE.md)** - Complete API documentation with all methods and parameters
-- **[Installation Guide](INSTALL_GUIDE.md)** - Detailed installation instructions
-- **[Quick Start](QUICKSTART.md)** - Getting started guide
-- **[Examples](examples/README.md)** - Usage examples and tutorials
+Full documentation is available at **[lichman0405.github.io/mace-inference](https://lichman0405.github.io/mace-inference/)**
+
+- **[Installation Guide](https://lichman0405.github.io/mace-inference/getting-started/installation/)** - Detailed installation instructions
+- **[Quick Start](https://lichman0405.github.io/mace-inference/getting-started/quickstart/)** - Getting started guide
+- **[User Guide](https://lichman0405.github.io/mace-inference/user-guide/overview/)** - Detailed usage guides
+- **[API Reference](https://lichman0405.github.io/mace-inference/api/core/)** - Complete API documentation
+- **[Examples](examples/)** - Usage examples and tutorials
 - **[Changelog](CHANGELOG.md)** - Version history and updates
 
 ### Available Tasks

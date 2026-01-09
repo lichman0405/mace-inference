@@ -44,12 +44,12 @@ bm = calc.bulk_modulus("structure.cif")
 print(f"Bulk Modulus: {bm['B_GPa']:.2f} GPa")
 
 # Adsorption energy
-E_ads = calc.adsorption_energy(
+result = calc.adsorption_energy(
     framework="mof.cif",
     adsorbate="CO2",
     site_position=[10.0, 10.0, 10.0]
 )
-print(f"E_ads = {E_ads['adsorption_energy']:.3f} eV")
+print(f"E_ads = {result['E_ads']:.3f} eV")
 ```
 
 ### Command Line Interface
