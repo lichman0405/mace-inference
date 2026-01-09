@@ -54,7 +54,6 @@ Thumbs.db
 *.traj
 *.yaml
 *.json
-*.cif
 *.xyz
 *.png
 *.pdf
@@ -66,6 +65,9 @@ nvt_md.*
 npt_md.*
 thermal_properties.png
 test_outputs/
+
+# Exclude example structure files from ignore
+!examples/structures/*.cif
 
 # mypy
 .mypy_cache/
